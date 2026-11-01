@@ -15,12 +15,14 @@ permissions:
 
 jobs:
   build-test:
-    name: Build and Unit Testing
+    name: Build, Test and SonarCloud Analysis
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
@@ -31,6 +33,18 @@ jobs:
 
       - name: Maven Build and Tests
         run: mvn clean verify
+
+      - name: SonarCloud Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+        run: >
+          mvn -B sonar:sonar
+          -Dsonar.organization=${SONAR_ORGANIZATION}
+          -Dsonar.projectKey=${SONAR_PROJECT_KEY}
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       - name: Upload JaCoCo Report
         if: always()
