@@ -1,0 +1,31 @@
+
+name: AWS OIDC Authentication Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  aws-authentication:
+    name: Authenticate GitHub Actions with AWS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: GitHubActionsOIDCTest
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Verify ECR access
+        run: |
+          aws ecr describe-repositories \
+            --repository-names "${{ vars.ECR_REPOSITORY }}" \
+            --region "${{ vars.AWS_REGION }}"
